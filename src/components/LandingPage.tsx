@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Crosshair, Shield, Users, Trophy, DollarSign, 
   ArrowRight, CheckCircle2, Play, Volume2, 
   FileText, Sparkles, Award, Zap, ChevronRight, 
   Settings, Flame, Clock, Target, Flag, ShieldAlert,
   Crown, Smartphone, Layers, Check, Copy, ExternalLink,
-  Menu, X
+  Menu, X, Radio, Eye
 } from 'lucide-react';
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'motion/react';
 import { Player, FinancialConfig, ScenarioPreset, MatchHistoryRecord } from '../types';
 import { tacticalAudio } from '../utils/audio';
 
@@ -31,6 +32,50 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('deathmatch');
   const [selectedRole, setSelectedRole] = useState<'Sniper' | 'Assault' | 'Tank' | 'Flanker'>('Sniper');
   const [demoCopiedPix, setDemoCopiedPix] = useState(false);
+
+  // Parallax ref and scroll progress for Hero Section
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start'],
+  });
+
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 90,
+    damping: 25,
+    restDelta: 0.001,
+  });
+
+  // Parallax transforms for Hero layers
+  const bgGridY = useTransform(smoothProgress, [0, 1], ['0%', '35%']);
+  const bgGlowY = useTransform(smoothProgress, [0, 1], ['0%', '65%']);
+  const heroTextY = useTransform(smoothProgress, [0, 1], ['0%', '15%']);
+  const hudParallaxY = useTransform(smoothProgress, [0, 1], ['0%', '-14%']);
+  const badge1ParallaxY = useTransform(smoothProgress, [0, 1], ['0%', '-45%']);
+  const badge2ParallaxY = useTransform(smoothProgress, [0, 1], ['0%', '-25%']);
+  const badge3ParallaxY = useTransform(smoothProgress, [0, 1], ['0%', '-60%']);
+  const crosshairRotate = useTransform(smoothProgress, [0, 1], [0, 100]);
+  const crosshairScale = useTransform(smoothProgress, [0, 1], [1, 1.35]);
+  const heroOpacity = useTransform(smoothProgress, [0, 0.9], [1, 0.25]);
+
+  // Interactive 3D Mouse Tilt for Hero HUD Card
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [8, -8]), { stiffness: 200, damping: 22 });
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), { stiffness: 200, damping: 22 });
+
+  const handleHeroMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleHeroMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   const confirmedCount = players.filter((p) => p.status === 'confirmed').length;
   const totalMatchesCount = matchHistory.length;
@@ -325,20 +370,47 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         )}
       </header>
 
-      {/* 2. HERO SECTION */}
-      <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
-        {/* Tactical Background Grid & Glow Effect */}
-        <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-25"></div>
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-10 left-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      {/* 2. HERO SECTION WITH PARALLAX & TACTICAL DEPTH */}
+      <section 
+        ref={heroRef}
+        onMouseMove={handleHeroMouseMove}
+        onMouseLeave={handleHeroMouseLeave}
+        className="relative overflow-hidden pt-12 pb-24 sm:pt-20 sm:pb-32"
+      >
+        {/* Parallax Tactical Background Grid */}
+        <motion.div 
+          style={{ y: bgGridY }}
+          className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:28px_28px] opacity-35 pointer-events-none"
+        />
+
+        {/* Tactical Crosshair Watermark in Background with Parallax Rotate & Scale */}
+        <motion.div 
+          style={{ rotate: crosshairRotate, scale: crosshairScale }}
+          className="absolute -top-20 -right-20 w-[420px] h-[420px] sm:w-[580px] sm:h-[580px] pointer-events-none opacity-[0.035] text-orange-500 flex items-center justify-center select-none"
+        >
+          <Crosshair className="w-full h-full stroke-[0.8]" />
+        </motion.div>
+
+        {/* Ambient Glowing Orbs with Smooth Parallax Depth */}
+        <motion.div 
+          style={{ y: bgGlowY }}
+          className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-br from-orange-500/15 via-amber-500/10 to-transparent rounded-full blur-3xl pointer-events-none"
+        />
+        <motion.div 
+          style={{ y: bgGridY }}
+          className="absolute bottom-6 left-10 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"
+        />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             
-            {/* Left Column: Thesis & CTAs */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+            {/* Left Column: Thesis & CTAs with Parallax Scroll Offset */}
+            <motion.div 
+              style={{ y: heroTextY, opacity: heroOpacity }}
+              className="lg:col-span-7 space-y-6 text-center lg:text-left"
+            >
               {/* Tactical Status Pill */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-tactical uppercase tracking-widest">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-tactical uppercase tracking-widest shadow-sm shadow-orange-500/10">
                 <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
                 <span>SISTEMA TÁTICO OPERACIONAL • PAINTBALL & AIRSOFT</span>
               </div>
@@ -398,11 +470,81 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <p className="text-xl font-bold font-code text-orange-400 mt-0.5">Automático</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Right Column: Live Interactive Tactical HUD Card */}
-            <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md bg-[#0D1117] rounded-2xl border-2 border-orange-500/40 p-4 sm:p-5 shadow-2xl shadow-orange-500/10">
+            {/* Right Column: Live Interactive Tactical HUD Card with 3D Tilt & Parallax Floating Badges */}
+            <div className="lg:col-span-5 relative [perspective:1000px]">
+              
+              {/* Floating Tactical Badge 1: Top-Left (Headshot/Elimination) */}
+              <motion.div
+                style={{ y: badge1ParallaxY }}
+                animate={{ y: [0, -7, 0] }}
+                transition={{ repeat: Infinity, duration: 4.2, ease: "easeInOut" }}
+                className="absolute -top-7 -left-5 z-20 hidden sm:flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#080C14]/95 border border-orange-500/50 shadow-xl shadow-orange-500/20 backdrop-blur-md"
+              >
+                <div className="w-7 h-7 rounded-lg bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400">
+                  <Target className="w-4 h-4 animate-pulse" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-tactical font-black text-orange-400 uppercase tracking-widest leading-tight">
+                    ELIMINAÇÃO CONFIRMADA
+                  </p>
+                  <p className="text-[11px] font-code text-slate-200 font-bold leading-tight">
+                    +150 PTS • TIME ALFA
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Floating Tactical Badge 2: Bottom-Right (PIX Paid) */}
+              <motion.div
+                style={{ y: badge2ParallaxY }}
+                animate={{ y: [0, 7, 0] }}
+                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
+                className="absolute -bottom-6 -right-4 z-20 hidden sm:flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#080C14]/95 border border-emerald-500/50 shadow-xl shadow-emerald-500/20 backdrop-blur-md"
+              >
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-tactical font-black text-emerald-400 uppercase tracking-widest leading-tight">
+                    RATEIO PIX CONFIRMADO
+                  </p>
+                  <p className="text-[11px] font-code text-emerald-300 font-bold leading-tight">
+                    R$ 35,00 • COMPROVANTE OK
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Floating Tactical Badge 3: Mid-Left (MVP) */}
+              <motion.div
+                style={{ y: badge3ParallaxY }}
+                animate={{ y: [0, -6, 0] }}
+                transition={{ repeat: Infinity, duration: 4.6, ease: "easeInOut", delay: 2 }}
+                className="absolute top-1/2 -left-8 -translate-y-1/2 z-20 hidden xl:flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#080C14]/95 border border-amber-500/50 shadow-xl shadow-amber-500/20 backdrop-blur-md"
+              >
+                <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                  <Crown className="w-4 h-4 text-amber-300" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-tactical font-black text-amber-400 uppercase tracking-widest leading-tight">
+                    MVP DA ARENA
+                  </p>
+                  <p className="text-[11px] font-code text-slate-200 font-bold leading-tight">
+                    SGT. CAVEIRA (8 KILLS)
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Main Interactive HUD Card with 3D Tilt & Parallax Offset */}
+              <motion.div 
+                style={{ 
+                  y: hudParallaxY,
+                  rotateX: rotateX,
+                  rotateY: rotateY,
+                  transformStyle: 'preserve-3d',
+                }}
+                className="relative mx-auto max-w-md bg-[#0D1117] rounded-2xl border-2 border-orange-500/40 p-4 sm:p-5 shadow-2xl shadow-orange-500/10 transition-shadow hover:shadow-orange-500/20"
+              >
                 {/* HUD Header */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                   <div className="flex items-center gap-2">
@@ -474,7 +616,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span>Abrir Tela Completa do Juiz</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </button>
-              </div>
+              </motion.div>
             </div>
 
           </div>
@@ -496,12 +638,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </p>
           </div>
 
-          {/* 5 Tactical Modules Grid */}
+          {/* 6 Tactical Modules Grid with Scroll Reveal Animations */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             {/* 1. Pelotão & Operadores */}
-            <div className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-orange-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 mb-4 group-hover:scale-105 transition-transform">
+            <motion.div 
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.45, delay: 0.05 }}
+              className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-orange-500/50 transition-all group hover:-translate-y-1 hover:shadow-xl hover:shadow-orange-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 mb-4 group-hover:scale-110 transition-transform">
                 <Users className="w-6 h-6" />
               </div>
               <h3 className="font-tactical font-bold text-lg uppercase text-white mb-2">
@@ -520,11 +668,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span>Histórico de jogos, vitórias e eliminações</span>
                 </li>
               </ul>
-            </div>
+            </motion.div>
 
             {/* 2. Sorteador com Algoritmo ELO */}
-            <div className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-orange-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-4 group-hover:scale-105 transition-transform">
+            <motion.div 
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.45, delay: 0.1 }}
+              className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-blue-500/50 transition-all group hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-4 group-hover:scale-110 transition-transform">
                 <Zap className="w-6 h-6" />
               </div>
               <h3 className="font-tactical font-bold text-lg uppercase text-white mb-2">
@@ -543,11 +697,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span>Modo Caótico & Capitães de Equipe</span>
                 </li>
               </ul>
-            </div>
+            </motion.div>
 
             {/* 3. Juiz & Cronômetro com Áudio */}
-            <div className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-orange-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mb-4 group-hover:scale-105 transition-transform">
+            <motion.div 
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.45, delay: 0.15 }}
+              className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-red-500/50 transition-all group hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mb-4 group-hover:scale-110 transition-transform">
                 <Clock className="w-6 h-6" />
               </div>
               <h3 className="font-tactical font-bold text-lg uppercase text-white mb-2">
@@ -566,11 +726,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span>Eleição de MVP do combate</span>
                 </li>
               </ul>
-            </div>
+            </motion.div>
 
             {/* 4. Rateio Financeiro & PIX */}
-            <div className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-orange-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4 group-hover:scale-105 transition-transform">
+            <motion.div 
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.45, delay: 0.2 }}
+              className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-emerald-500/50 transition-all group hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4 group-hover:scale-110 transition-transform">
                 <DollarSign className="w-6 h-6" />
               </div>
               <h3 className="font-tactical font-bold text-lg uppercase text-white mb-2">
@@ -589,11 +755,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span>Chave PIX com cópia em 1 toque</span>
                 </li>
               </ul>
-            </div>
+            </motion.div>
 
             {/* 5. Hall da Fama & Medalhas */}
-            <div className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-orange-500/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 group-hover:scale-105 transition-transform">
+            <motion.div 
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.45, delay: 0.25 }}
+              className="bg-[#0e131d] border border-slate-800 rounded-2xl p-6 hover:border-amber-500/50 transition-all group hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 group-hover:scale-110 transition-transform">
                 <Trophy className="w-6 h-6" />
               </div>
               <h3 className="font-tactical font-bold text-lg uppercase text-white mb-2">
@@ -612,11 +784,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <span>Medalhas dinâmicas por desempenho</span>
                 </li>
               </ul>
-            </div>
+            </motion.div>
 
             {/* 6. Painel Administrador CRUD */}
-            <div className="bg-[#0e131d] border-2 border-orange-500/40 rounded-2xl p-6 hover:border-orange-500 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 mb-4 group-hover:scale-105 transition-transform">
+            <motion.div 
+              initial={{ opacity: 0, y: 35 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.45, delay: 0.3 }}
+              className="bg-[#0e131d] border-2 border-orange-500/40 rounded-2xl p-6 hover:border-orange-500 transition-all group hover:-translate-y-1 hover:shadow-xl hover:shadow-orange-500/10"
+            >
+              <div className="w-12 h-12 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 mb-4 group-hover:scale-110 transition-transform">
                 <Settings className="w-6 h-6" />
               </div>
               <h3 className="font-tactical font-bold text-lg uppercase text-white mb-2 flex items-center gap-2">
@@ -633,7 +811,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span>Acessar Painel CRUD</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
-            </div>
+            </motion.div>
 
           </div>
         </div>

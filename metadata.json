@@ -1,0 +1,6 @@
+{
+  "name": "PaintOps - Gerenciador Tático de Paintball",
+  "description": "Aplicação web mobile-first para gerenciamento de pelotão, balanceamento de equipes, placar tático do árbitro com áudio, calculadora de custos e ranking gamificado de paintball.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

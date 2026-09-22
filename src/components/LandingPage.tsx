@@ -33,6 +33,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [selectedRole, setSelectedRole] = useState<'Sniper' | 'Assault' | 'Tank' | 'Flanker'>('Sniper');
   const [demoCopiedPix, setDemoCopiedPix] = useState(false);
 
+  // Global Tactical Scroll Progress
+  const { scrollYProgress: globalScrollProgress } = useScroll();
+  const smoothGlobalProgress = useSpring(globalScrollProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
   // Parallax ref and scroll progress for Hero Section
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -57,6 +65,43 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const crosshairRotate = useTransform(smoothProgress, [0, 1], [0, 100]);
   const crosshairScale = useTransform(smoothProgress, [0, 1], [1, 1.35]);
   const heroOpacity = useTransform(smoothProgress, [0, 0.9], [1, 0.25]);
+
+  // Section 3.5: Profissões Parallax
+  const profissoesRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: profissoesScrollProgress } = useScroll({
+    target: profissoesRef,
+    offset: ['start end', 'end start'],
+  });
+  const profBgY = useTransform(profissoesScrollProgress, [0, 1], ['-15%', '15%']);
+  const profWatermarkRotate = useTransform(profissoesScrollProgress, [0, 1], [-30, 90]);
+
+  // Section 5: Rateio Financeiro Parallax
+  const financeRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: financeScrollProgress } = useScroll({
+    target: financeRef,
+    offset: ['start end', 'end start'],
+  });
+  const financeCardY = useTransform(financeScrollProgress, [0, 1], ['25px', '-30px']);
+  const financeBadgeFloatY = useTransform(financeScrollProgress, [0, 1], ['-15px', '25px']);
+
+  // Section 6: Hall da Fama 3D Podium Parallax
+  const rankingRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: rankingScrollProgress } = useScroll({
+    target: rankingRef,
+    offset: ['start end', 'end start'],
+  });
+  const podium1Y = useTransform(rankingScrollProgress, [0, 1], ['25px', '-40px']);
+  const podium2Y = useTransform(rankingScrollProgress, [0, 1], ['10px', '-10px']);
+  const podium3Y = useTransform(rankingScrollProgress, [0, 1], ['15px', '5px']);
+
+  // Section 8: Final CTA Sonar Parallax
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: ctaScrollProgress } = useScroll({
+    target: ctaRef,
+    offset: ['start end', 'end start'],
+  });
+  const ctaSonarScale = useTransform(ctaScrollProgress, [0, 1], [0.85, 1.45]);
+  const ctaSonarOpacity = useTransform(ctaScrollProgress, [0, 0.5, 1], [0.15, 0.45, 0.1]);
 
   // Interactive 3D Mouse Tilt for Hero HUD Card
   const mouseX = useMotionValue(0);
@@ -202,6 +247,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   return (
     <div className="min-h-screen bg-[#07090E] text-slate-100 font-sans selection:bg-orange-500 selection:text-white">
+      {/* 0. GLOBAL TACTICAL SCROLL HUD TRACKER */}
+      <motion.div
+        style={{ scaleX: smoothGlobalProgress }}
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-amber-400 to-emerald-400 z-[100] origin-left shadow-lg shadow-orange-500/50 pointer-events-none"
+      />
+
       {/* 1. TOP TACTICAL NAVIGATION BAR */}
       <header className="sticky top-0 z-50 bg-[#0A0D14]/90 backdrop-blur-md border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -817,16 +868,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* 3.5. PROFISSÕES & CLASSES TÁTICAS (ATIRADOR, ASSALTO, TANQUE / SUP, FLANQUEADOR) */}
-      <section id="profissoes" className="py-16 sm:py-24 bg-[#0A0E17] border-y border-slate-800/80 relative overflow-hidden">
-        {/* Ambient tactical lighting */}
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-orange-600/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
+      {/* 3.5. PROFISSÕES & CLASSES TÁTICAS WITH PARALLAX */}
+      <section 
+        ref={profissoesRef}
+        id="profissoes" 
+        className="py-16 sm:py-24 bg-[#0A0E17] border-y border-slate-800/80 relative overflow-hidden"
+      >
+        {/* Parallax Ambient tactical lighting */}
+        <motion.div 
+          style={{ y: profBgY }}
+          className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-3xl pointer-events-none" 
+        />
+        <motion.div 
+          style={{ y: profBgY }}
+          className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-3xl pointer-events-none" 
+        />
+
+        {/* Parallax Rotating Tactical Crosshair in Background */}
+        <motion.div
+          style={{ rotate: profWatermarkRotate }}
+          className="absolute -right-20 top-1/3 w-96 h-96 pointer-events-none opacity-[0.03] text-orange-400 select-none flex items-center justify-center"
+        >
+          <Crosshair className="w-full h-full stroke-[0.8]" />
+        </motion.div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-tactical font-black uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-tactical font-black uppercase tracking-widest shadow-sm shadow-orange-500/10">
               <Target className="w-3.5 h-3.5" />
               <span>CLASSES & ESPECIALIZAÇÕES TÁTICAS</span>
             </div>
@@ -855,7 +924,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   className={`text-left p-5 rounded-2xl border transition-all relative overflow-hidden group ${
                     isSelected
                       ? role.activeCardClass
-                      : 'bg-[#0E131E] border-slate-800 hover:border-slate-700 text-slate-300'
+                      : 'bg-[#0E131E] border-slate-800 hover:border-slate-700 text-slate-300 hover:-translate-y-0.5'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-3">
@@ -894,8 +963,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             })}
           </div>
 
-          {/* Deep Intel Dossier Panel for Selected Role */}
-          <div className="bg-[#0E131E] border-2 border-slate-800 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
+          {/* Deep Intel Dossier Panel for Selected Role with Smooth Transition */}
+          <motion.div 
+            key={currentRoleData.id}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="bg-[#0E131E] border-2 border-slate-800 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl"
+          >
             {/* Background Glow */}
             <div className={`absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl ${currentRoleData.bgGlow} blur-2xl pointer-events-none`} />
 
@@ -1020,7 +1095,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </ul>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Quick Comparison Matrix Table for All 4 Roles */}
           <div className="mt-12 bg-[#0E131E] border border-slate-800 rounded-2xl p-6 sm:p-8">
@@ -1217,9 +1292,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* 5. RATEIO FINANCEIRO & PIX DEMO */}
-      <section id="financeiro" className="py-16 sm:py-24 bg-[#0A0D14] border-t border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      {/* 5. RATEIO FINANCEIRO & PIX DEMO WITH PARALLAX */}
+      <section 
+        ref={financeRef}
+        id="financeiro" 
+        className="py-16 sm:py-24 bg-[#0A0D14] border-t border-slate-800/80 relative overflow-hidden"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             <div className="space-y-4">
               <span className="text-xs font-tactical font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
@@ -1263,59 +1342,81 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
             </div>
 
-            {/* Financial Visual Mockup */}
-            <div className="bg-[#0E131D] border border-slate-800 rounded-2xl p-5 shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                <span className="font-tactical font-black text-sm uppercase text-white flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-orange-400" />
-                  <span>SIMULAÇÃO FINANCEIRA DA PARTIDA</span>
+            {/* Financial Visual Mockup with Parallax Offset & Floating Badge */}
+            <div className="relative">
+              {/* Floating Audit Badge */}
+              <motion.div
+                style={{ y: financeBadgeFloatY }}
+                animate={{ y: [0, -6, 0] }}
+                transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut' }}
+                className="absolute -top-5 -right-3 z-20 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#090D15]/95 border border-emerald-500/50 shadow-xl shadow-emerald-500/20 backdrop-blur-md"
+              >
+                <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-[10px] font-tactical font-black text-emerald-400 uppercase tracking-wider">
+                  AUDITORIA PIX EM TEMPO REAL
                 </span>
-                <span className="text-[11px] font-code text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                  100% AUTOMÁTICO
-                </span>
-              </div>
+              </motion.div>
 
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80">
-                  <span className="text-slate-400">Locação do Campo:</span>
-                  <span className="font-code font-bold text-white">R$ {config.venueCost.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80">
-                  <span className="text-slate-400">Bolinhas Coletivas ({config.communityBoxesCount} caixas):</span>
-                  <span className="font-code font-bold text-white">R$ {(config.communityBoxesCount * config.boxPrice).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80">
-                  <span className="text-slate-400">Atletas Presentes:</span>
-                  <span className="font-code font-bold text-orange-400">{confirmedCount || 8} operadores</span>
-                </div>
-                <div className="flex justify-between p-3 rounded-lg bg-orange-950/30 border border-orange-500/40 text-sm font-bold">
-                  <span className="text-orange-300 font-tactical uppercase">Rateio Base / Operador:</span>
-                  <span className="font-code text-white">
-                    R$ {((config.venueCost + config.communityBoxesCount * config.boxPrice) / (confirmedCount || 1)).toFixed(2)}
+              <motion.div 
+                style={{ y: financeCardY }}
+                className="bg-[#0E131D] border border-slate-800 rounded-2xl p-5 shadow-2xl hover:border-emerald-500/40 transition-colors"
+              >
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                  <span className="font-tactical font-black text-sm uppercase text-white flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-orange-400" />
+                    <span>SIMULAÇÃO FINANCEIRA DA PARTIDA</span>
+                  </span>
+                  <span className="text-[11px] font-code text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                    100% AUTOMÁTICO
                   </span>
                 </div>
-              </div>
 
-              <button
-                onClick={() => {
-                  tacticalAudio.playVictory();
-                  onOpenApp();
-                }}
-                className="mt-4 w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-tactical text-xs uppercase font-bold tracking-wider flex items-center justify-center gap-2 border border-slate-700 transition-colors"
-              >
-                <span>Ver Módulo Financeiro Completo</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80">
+                    <span className="text-slate-400">Locação do Campo:</span>
+                    <span className="font-code font-bold text-white">R$ {config.venueCost.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80">
+                    <span className="text-slate-400">Bolinhas Coletivas ({config.communityBoxesCount} caixas):</span>
+                    <span className="font-code font-bold text-white">R$ {(config.communityBoxesCount * config.boxPrice).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/80">
+                    <span className="text-slate-400">Atletas Presentes:</span>
+                    <span className="font-code font-bold text-orange-400">{confirmedCount || 8} operadores</span>
+                  </div>
+                  <div className="flex justify-between p-3 rounded-lg bg-orange-950/30 border border-orange-500/40 text-sm font-bold">
+                    <span className="text-orange-300 font-tactical uppercase">Rateio Base / Operador:</span>
+                    <span className="font-code text-white">
+                      R$ {((config.venueCost + config.communityBoxesCount * config.boxPrice) / (confirmedCount || 1)).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    tacticalAudio.playVictory();
+                    onOpenApp();
+                  }}
+                  className="mt-4 w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-tactical text-xs uppercase font-bold tracking-wider flex items-center justify-center gap-2 border border-slate-700 transition-colors"
+                >
+                  <span>Ver Módulo Financeiro Completo</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </motion.div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. HALL DA FAMA & RANKING SNAPSHOT */}
-      <section id="ranking" className="py-16 sm:py-24 bg-[#07090E]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      {/* 6. HALL DA FAMA & RANKING SNAPSHOT WITH 3D PODIUM PARALLAX */}
+      <section 
+        ref={rankingRef}
+        id="ranking" 
+        className="py-16 sm:py-24 bg-[#07090E] relative overflow-hidden"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-12">
-            <span className="text-xs font-tactical font-bold uppercase tracking-widest text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
+            <span className="text-xs font-tactical font-bold uppercase tracking-widest text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30 shadow-sm shadow-amber-500/10">
               GAMIFICAÇÃO DE COMBATE
             </span>
             <h2 className="text-2xl sm:text-4xl font-black font-tactical uppercase tracking-tight text-white">
@@ -1326,21 +1427,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </p>
           </div>
 
-          {/* Podium Top 3 Operators Preview */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          {/* Podium Top 3 Operators Preview with Dynamic 3D Parallax Elevation */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto items-end pt-8">
             {players.slice(0, 3).map((p, idx) => {
               const medals = ['🥇 1º LUGAR', '🥈 2º LUGAR', '🥉 3º LUGAR'];
-              const borderColors = ['border-amber-500', 'border-slate-400', 'border-amber-700'];
+              const borderColors = [
+                'border-amber-500 shadow-amber-500/25', 
+                'border-slate-400 shadow-slate-500/15', 
+                'border-amber-700 shadow-amber-800/15'
+              ];
+              const podiumY = idx === 0 ? podium1Y : idx === 1 ? podium2Y : podium3Y;
+
               return (
-                <div
+                <motion.div
                   key={p.id}
-                  className={`bg-[#0E131D] border-2 ${borderColors[idx] || 'border-slate-800'} rounded-2xl p-5 text-center relative`}
+                  style={{ y: podiumY }}
+                  whileHover={{ scale: 1.03 }}
+                  className={`bg-[#0E131D] border-2 ${borderColors[idx] || 'border-slate-800'} rounded-2xl p-5 text-center relative shadow-2xl transition-all ${
+                    idx === 0 
+                      ? 'sm:order-2 sm:-mt-8 bg-gradient-to-b from-[#131926] to-[#0E131D] border-amber-400 ring-1 ring-amber-400/30' 
+                      : idx === 1 
+                        ? 'sm:order-1' 
+                        : 'sm:order-3'
+                  }`}
                 >
-                  <span className="text-[10px] font-tactical font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+                  <span className={`text-[10px] font-tactical font-black uppercase tracking-wider px-2 py-0.5 rounded border inline-block ${
+                    idx === 0 
+                      ? 'text-amber-300 bg-amber-500/20 border-amber-400/50 shadow-sm shadow-amber-500/20' 
+                      : 'text-slate-400 bg-slate-800/80 border-slate-700'
+                  }`}>
                     {medals[idx]}
                   </span>
-                  <h4 className="font-tactical font-black text-xl uppercase text-white mt-3">
-                    "{p.callsign}"
+
+                  <h4 className="font-tactical font-black text-xl uppercase text-white mt-3 flex items-center justify-center gap-1.5">
+                    {idx === 0 && <Crown className="w-4 h-4 text-amber-400" />}
+                    <span>"{p.callsign}"</span>
                   </h4>
                   <p className="text-xs text-slate-400">{p.name}</p>
 
@@ -1358,7 +1479,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       <p className="font-bold text-white">{p.stats.eliminations}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
@@ -1417,11 +1538,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* 8. FINAL CALL TO ACTION BANNER */}
-      <section className="py-20 bg-gradient-to-b from-[#07090E] to-[#0D1117] border-t border-slate-800">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-orange-600/20 border border-orange-500/40 text-orange-400 mb-2">
-            <Crosshair className="w-8 h-8" />
+      {/* 8. FINAL CALL TO ACTION BANNER WITH EXPANDING SONAR PARALLAX */}
+      <section 
+        ref={ctaRef}
+        className="py-24 bg-gradient-to-b from-[#07090E] to-[#0D1117] border-t border-slate-800 relative overflow-hidden"
+      >
+        {/* Parallax Expanding Tactical Sonar Rings */}
+        <motion.div 
+          style={{ scale: ctaSonarScale, opacity: ctaSonarOpacity }}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
+          <div className="w-[520px] h-[520px] sm:w-[750px] sm:h-[750px] rounded-full border border-orange-500/35" />
+          <div className="absolute w-[360px] h-[360px] sm:w-[520px] sm:h-[520px] rounded-full border border-orange-500/25" />
+          <div className="absolute w-[200px] h-[200px] sm:w-[300px] sm:h-[300px] rounded-full border border-orange-500/15" />
+        </motion.div>
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6 relative z-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-orange-600/20 border border-orange-500/40 text-orange-400 mb-2 shadow-lg shadow-orange-500/20">
+            <Crosshair className="w-8 h-8 animate-pulse" />
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-black font-tactical uppercase tracking-tight text-white">

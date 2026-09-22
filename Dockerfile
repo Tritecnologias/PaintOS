@@ -22,11 +22,10 @@ FROM nginx:alpine
 # Copy built distribution from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom Nginx configuration with SPA fallback and dual port listening
+# Copy custom Nginx configuration with SPA fallback and multi-port listening
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 3006 (requested) and port 80 (standard HTTP)
-EXPOSE 3006 80
+# Expose all ports used by Coolify reverse proxy (80, 3000, 3006, 8080)
+EXPOSE 80 3000 3006 8080
 
 CMD ["nginx", "-g", "daemon off;"]
-
